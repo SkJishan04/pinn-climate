@@ -4,6 +4,7 @@ Produces (input_sequence, target_sequence) pairs for sequence-to-sequence
 spatiotemporal forecasting.
 """
 
+import os
 import numpy as np
 import xarray as xr
 import torch
@@ -18,6 +19,15 @@ class ClimateNetCDFDataset(Dataset):
             nc_path: path to .nc file (NOAA OISST, Copernicus CMEMS, etc.)
             variable: variable name inside the NetCDF (e.g. 'sst', 'precip')
         """
+        if not os.path.exists(nc_path):
+            raise FileNotFoundError(
+                f"Data file not found at '{nc_path}'.\n"
+                f"If you're using synthetic data, run:\n"
+                f"  python data/generate_synthetic_data.py\n"
+                f"first to create it, or update DATA_PATH in config.py "
+                f"to point to your real NOAA/Copernicus .nc file."
+            )
+
         ds = xr.open_dataset(nc_path)
         data = ds[variable].values.astype(np.float32)  # shape: (time, H, W)
 
@@ -42,6 +52,15 @@ class ClimateNetCDFDataset(Dataset):
 
         self.seq_len = seq_len
         self.pred_len = pred_len
+
+        min_required = seq_len + pred_len
+        if len(self.data) < min_required + 1:
+            raise ValueError(
+                f"Not enough timesteps for mode='{mode}': got {len(self.data)}, "
+                f"need at least {min_required + 1} (SEQ_LEN={seq_len} + PRED_LEN={pred_len} + 1).\n"
+                f"Either regenerate data with more time_steps, or reduce SEQ_LEN/PRED_LEN "
+                f"in config.py, or increase TRAIN_SPLIT if this is the validation set."
+            )
 
     @staticmethod
     def _resize_spatial(data, h, w):
