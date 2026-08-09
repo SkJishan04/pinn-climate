@@ -52,7 +52,7 @@ def plot_prediction_grid(input_seq, true_seq, pred_seq, save_path, cmap="RdYlBu_
     fig.colorbar(im2, ax=axes[2, :].tolist(), fraction=0.02, pad=0.01, label="|Error|")
 
     plt.suptitle("Predicted vs. Ground Truth Field Comparison", fontsize=14)
-    plt.tight_layout()
+    fig.tight_layout(rect=[0, 0, 1, 1])
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved prediction comparison to {save_path}")
