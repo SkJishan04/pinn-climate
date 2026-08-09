@@ -106,3 +106,47 @@ def plot_training_history(history, save_path):
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved training history plot to {save_path}")
+
+def plot_ablation_comparison(baseline_metrics, pinn_metrics, save_path):
+    """
+    Bar chart comparing baseline (MSE-only) vs physics-informed model
+    across MAE, RMSE, and physical violation rate.
+    """
+    labels = ["MAE", "RMSE", "Physical Violation Rate (%)"]
+    baseline_vals = [
+        baseline_metrics["MAE"],
+        baseline_metrics["RMSE"],
+        baseline_metrics["Physical_Violation_Rate"] * 100,
+    ]
+    pinn_vals = [
+        pinn_metrics["MAE"],
+        pinn_metrics["RMSE"],
+        pinn_metrics["Physical_Violation_Rate"] * 100,
+    ]
+
+    x = np.arange(len(labels))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+    bars1 = ax.bar(x - width / 2, baseline_vals, width, label="Baseline (MSE-only)", color="tab:gray")
+    bars2 = ax.bar(x + width / 2, pinn_vals, width, label="Physics-Informed (Adaptive λ)", color="tab:blue")
+
+    ax.set_ylabel("Value")
+    ax.set_title("Baseline vs. Physics-Informed Model — Validation Metrics")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    ax.grid(axis="y", alpha=0.3)
+
+    for bars in (bars1, bars2):
+        for bar in bars:
+            height = bar.get_height()
+            ax.annotate(f"{height:.3f}",
+                        xy=(bar.get_x() + bar.get_width() / 2, height),
+                        xytext=(0, 3), textcoords="offset points",
+                        ha="center", fontsize=9)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved ablation comparison plot to {save_path}")
