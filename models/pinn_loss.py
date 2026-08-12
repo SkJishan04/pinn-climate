@@ -107,7 +107,20 @@ class PhysicsInformedLoss(nn.Module):
 
         if lambda_physics > 0:
             residual = self.physics_residual(pred)
-            physics_loss = torch.mean(residual ** 2)
+            physics_loss_raw = torch.mean(residual ** 2)
+
+            # --- Adaptive scale normalization ---
+            # The PDE residual and MSE live on very different numerical
+            # scales (residual is computed via finite differences on
+            # normalized data), so without this, lambda_physics doesn't
+            # control the *intended* relative weight — it gets swamped by
+            # whatever raw magnitude the residual happens to have.
+            # We normalize physics_loss to match mse_loss's current scale
+            # (detached, so this rescaling doesn't distort gradients),
+            # so lambda_physics=1.0 means "physics loss contributes about
+            # as much as MSE", not some arbitrary huge number.
+            scale = (mse_loss.detach() / (physics_loss_raw.detach() + 1e-8)).clamp(max=1e4)
+            physics_loss = physics_loss_raw * scale
         else:
             physics_loss = torch.tensor(0.0, device=pred.device)
 
