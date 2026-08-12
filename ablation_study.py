@@ -102,6 +102,13 @@ def train_one_model(cfg, train_loader, val_loader, val_ds, use_physics, tag):
             best_state = copy.deepcopy(model.state_dict())
             best_metrics = dict(val_metrics)
 
+    # Save this model's best checkpoint to disk with a tag-specific filename
+    os.makedirs(cfg.CHECKPOINT_DIR, exist_ok=True)
+    safe_tag = tag.lower().replace(" ", "_").replace("(", "").replace(")", "")
+    checkpoint_path = os.path.join(cfg.CHECKPOINT_DIR, f"{safe_tag}.pt")
+    torch.save(best_state, checkpoint_path)
+    print(f"  -> Saved best checkpoint to {checkpoint_path} (val_RMSE={best_val_rmse:.4f})")
+
     return best_metrics
 
 
