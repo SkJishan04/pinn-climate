@@ -1,36 +1,16 @@
-# Physics-Informed ConvLSTM for Satellite Climate Prediction
+<div align="center">
 
-Predicts sea surface temperature / precipitation fields from satellite
-time series (NOAA / Copernicus data) using a ConvLSTM constrained by a
-physics-informed loss (advection-diffusion PDE residual + non-negativity
-constraint), with adaptive lambda weighting so the model learns basic
-data patterns before physics constraints are enforced.
+# 🌊 Physics-Informed ConvLSTM for Satellite Climate Prediction
 
-## Setup
-```bash
-pip install -r requirements.txt
-```
+**Constraining deep learning with physical laws for more trustworthy climate forecasts**
 
-## Usage
-1. Place a NetCDF file (NOAA OISST or Copernicus CMEMS) at the path set
-   in `config.py` (`DATA_PATH`).
-2. Train:
-```bash
-   python train.py
-```
-3. Evaluate:
-```bash
-   python evaluate.py
-```
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.1%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Data](https://img.shields.io/badge/Data-NOAA%20OISST-orange)](https://www.ncei.noaa.gov/products/optimum-interpolation-sst)
 
-## How the physics constraint works
-The loss combines:
-- **Data loss**: standard MSE between predicted and ground-truth frames.
-- **Physics loss**: residual of the 2D advection-diffusion PDE computed
-  via finite differences on the predicted sequence.
-- **Non-negativity penalty**: penalizes physically impossible negative
-  values (e.g. rainfall, energy).
+*A hybrid deep learning system that predicts sea surface temperature from satellite time-series data — constrained by real physics (advection-diffusion PDEs) so the model can't predict physically impossible outcomes.*
 
-`lambda` (the physics weight) starts near 0 and ramps up after a warmup
-period (`LAMBDA_WARMUP_EPOCHS`), so gradients from the physics term don't
-destabilize early training.
+</div>
+
+---
