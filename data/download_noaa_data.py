@@ -69,9 +69,13 @@ def download(lat_min, lat_max, lon_min, lon_max, date_start, date_end, out_path)
             f"error page). First 500 chars:\n{preview}\n\nOriginal error: {e}"
         )
 
-    if "zlev" in ds.dims:
-        ds = ds.squeeze("zlev", drop=True)
+    # Squeeze out any singleton dimension (zlev/depth/altitude — name varies
+    # by dataset), so the saved file is strictly (time, lat, lon).
+    singleton_dims = [d for d in ds.dims if ds.sizes[d] == 1 and d != "time"]
+    if singleton_dims:
+        ds = ds.squeeze(singleton_dims, drop=True)
         ds.to_netcdf(out_path)
+        print(f"Squeezed singleton dimensions: {singleton_dims}")
 
     print(f"\nVerified valid NetCDF file.")
     print(f"Shape: {ds['sst'].shape}  (time, lat, lon)")
