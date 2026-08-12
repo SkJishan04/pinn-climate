@@ -1,28 +1,17 @@
 """
 Downloads real NOAA OISST (Optimum Interpolation Sea Surface Temperature)
 data from the public ERDDAP server — no API key or account required.
-
-This replaces the synthetic dataset with real satellite-derived SST data,
-so the physics-informed loss has genuine turbulent/discontinuous patterns
-to be tested against (synthetic Gaussian blobs are too smooth to be a
-real test of the physics constraint).
-
-Source: NOAA Coral Reef Watch / OISST v2.1 daily, via ERDDAP.
 """
 
 import argparse
 import os
+import requests
 import xarray as xr
 
-# Public ERDDAP endpoint for NOAA OISST v2.1 daily SST (no auth required)
 ERDDAP_BASE = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180"
 
 
 def build_query_url(lat_min, lat_max, lon_min, lon_max, date_start, date_end):
-    """
-    Builds an ERDDAP OPeNDAP query URL for a bounding box + date range.
-    Variable: 'sst' (sea surface temperature, degrees C)
-    """
     url = (
         f"{ERDDAP_BASE}.nc?"
         f"sst[({date_start}):1:({date_end})][(0.0):1:(0.0)]"
@@ -35,24 +24,48 @@ def download(lat_min, lat_max, lon_min, lon_max, date_start, date_end, out_path)
     url = build_query_url(lat_min, lat_max, lon_min, lon_max, date_start, date_end)
     print(f"Requesting data from ERDDAP:\n{url}\n")
 
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+
+    # Download the actual .nc bytes via plain HTTP GET first — this avoids
+    # netCDF4's OPeNDAP client, which mishandles ERDDAP's query-string syntax
+    # and throws "Malformed or unexpected Constraint" when opened directly
+    # as a URL with xr.open_dataset().
     try:
-        ds = xr.open_dataset(url)
-    except Exception as e:
+        response = requests.get(url, timeout=120)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
         raise RuntimeError(
-            f"Failed to fetch data from NOAA ERDDAP. This can happen if the "
-            f"server is temporarily unavailable, the date range has no data yet, "
-            f"or there's no internet access from this environment.\n"
+            f"Failed to download data from NOAA ERDDAP.\n"
+            f"This can happen if the server is temporarily unavailable, "
+            f"the date range/bounding box has no data, or there's no "
+            f"internet access from this environment.\n"
             f"Original error: {e}"
         )
 
-    # Drop the singleton 'zlev' depth dimension if present
+    with open(out_path, "wb") as f:
+        f.write(response.content)
+
+    print(f"Downloaded {len(response.content) / 1e6:.2f} MB to {out_path}")
+
+    # Now open the local file to verify it's valid and print info
+    try:
+        ds = xr.open_dataset(out_path)
+    except Exception as e:
+        # If this fails, the downloaded content was likely an error page,
+        # not real NetCDF data
+        with open(out_path, "r", errors="ignore") as f:
+            preview = f.read(500)
+        raise RuntimeError(
+            f"Downloaded file is not valid NetCDF. ERDDAP likely returned "
+            f"an error page instead of data. First 500 chars of response:\n"
+            f"{preview}\n\nOriginal error: {e}"
+        )
+
     if "zlev" in ds.dims:
         ds = ds.squeeze("zlev", drop=True)
+        ds.to_netcdf(out_path)  # re-save without the singleton dim
 
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    ds.to_netcdf(out_path)
-
-    print(f"Saved real NOAA SST data to {out_path}")
+    print(f"Verified valid NetCDF file.")
     print(f"Shape: {ds['sst'].shape}  (time, lat, lon)")
     print(f"Date range: {ds.time.values[0]} to {ds.time.values[-1]}")
 
