@@ -31,7 +31,7 @@ class Config:
 
     # --- Adaptive Loss Weighting ---
     LAMBDA_INIT = 0.0        # start with pure data-driven loss
-    LAMBDA_MAX = 1.0
+    LAMBDA_MAX = 0.3
     LAMBDA_WARMUP_EPOCHS = 15   # epochs before physics loss kicks in
     LAMBDA_RAMP_EPOCHS = 20     # epochs over which lambda ramps to max
 
