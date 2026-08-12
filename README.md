@@ -26,3 +26,21 @@ $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{MSE}} + \lambda \, \mathcal{L}
 where $\mathcal{L}_{\text{physics}}$ penalizes violations of a 2D advection-diffusion PDE, and $\lambda$ is **adaptively scheduled** during training — starting at zero (so the model first learns basic data patterns) and ramping up only once training has stabilized (so physics acts as a refinement, not a distraction).
 
 The model is trained and evaluated on **real NOAA OISST satellite sea surface temperature data**, with a full ablation study comparing the physics-informed model against a pure-MSE baseline.
+
+## 📊 Key Results
+
+An ablation study was run comparing an identical ConvLSTM architecture trained with **MSE-only loss** (baseline) vs. **MSE + adaptive physics loss** (physics-informed), on the same real NOAA OISST data and train/val split.
+
+| Metric | Baseline (MSE-only) | Physics-Informed | Change |
+|---|---|---|---|
+| MAE | 0.3014 | 0.3400 | +12.8% |
+| RMSE | 0.4848 | 0.5331 | +10.0% |
+| **Physical Violation Rate** | **0.478%** | **0.043%** | **−91% (11× fewer violations)** |
+
+![Ablation Comparison](outputs/ablation_comparison.png)
+
+### What this actually shows
+
+The physics-informed model does **not** win on raw MAE/RMSE — and this project reports that honestly rather than cherry-picking a flattering run. What it *does* show is the real value proposition of physics-informed learning: **an 11× reduction in physically implausible predictions**, at a modest ~10–13% cost in raw pointwise error. For applications where physical plausibility matters as much as average accuracy (e.g. downstream models that assume conservation laws hold), that tradeoff is often worth making.
+
+This result also surfaced and led to fixing a real bug: an early version of the physics loss was **numerically unscaled** relative to MSE, causing the physics-weighted model to diverge once $\lambda$ ramped up (RMSE ballooned to 3.4, a −208% "improvement"). The fix — normalizing the physics residual's magnitude to match MSE's scale before applying $\lambda$ — is what produced the stable, interpretable result above. See [`models/pinn_loss.py`](models/pinn_loss.py) for the corrected implementation.
