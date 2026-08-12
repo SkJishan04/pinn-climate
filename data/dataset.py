@@ -29,7 +29,21 @@ class ClimateNetCDFDataset(Dataset):
             )
 
         ds = xr.open_dataset(nc_path)
-        data = ds[variable].values.astype(np.float32)  # shape: (time, H, W)
+        data = ds[variable].values.astype(np.float32)  # expected shape: (time, H, W)
+
+        # Defensive: some NetCDF sources (like NCEI's OISST) include a
+        # singleton depth/zlev/altitude axis that survives export as
+        # (time, depth, lat, lon). Squeeze any extra singleton axis so we
+        # always end up with exactly (time, H, W).
+        if data.ndim > 3:
+            data = np.squeeze(data)
+            if data.ndim != 3:
+                raise ValueError(
+                    f"Expected data to reduce to 3 dims (time, H, W) after "
+                    f"squeezing, but got shape {data.shape}. Check the "
+                    f"variable '{variable}' in '{nc_path}' for extra "
+                    f"non-singleton dimensions."
+                )
 
         # Basic cleaning: fill NaNs (land masks) with local mean
         data = np.nan_to_num(data, nan=np.nanmean(data))
