@@ -1,71 +1,89 @@
 """
 Downloads real NOAA OISST (Optimum Interpolation Sea Surface Temperature)
-data from the public ERDDAP server — no API key or account required.
+data from a public ERDDAP server — no API key or account required.
+
+Includes retry logic and a fallback mirror, since ERDDAP servers
+occasionally return transient 502/503 errors under load.
 """
 
 import argparse
 import os
+import time
 import requests
 import xarray as xr
 
-ERDDAP_BASE = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180"
+# Primary + fallback ERDDAP mirrors hosting the same OISST v2.1 dataset
+ERDDAP_MIRRORS = [
+    "https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180",
+    "https://polarwatch.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180",
+]
 
 
-def build_query_url(lat_min, lat_max, lon_min, lon_max, date_start, date_end):
-    url = (
-        f"{ERDDAP_BASE}.nc?"
+def build_query_url(base, lat_min, lat_max, lon_min, lon_max, date_start, date_end):
+    return (
+        f"{base}.nc?"
         f"sst[({date_start}):1:({date_end})][(0.0):1:(0.0)]"
         f"[({lat_min}):1:({lat_max})][({lon_min}):1:({lon_max})]"
     )
-    return url
+
+
+def try_download(url, out_path, max_retries=3, timeout=180):
+    for attempt in range(1, max_retries + 1):
+        try:
+            print(f"  Attempt {attempt}/{max_retries}...")
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()
+
+            with open(out_path, "wb") as f:
+                f.write(response.content)
+
+            print(f"  Downloaded {len(response.content) / 1e6:.2f} MB")
+            return True
+
+        except requests.exceptions.RequestException as e:
+            print(f"  Failed: {e}")
+            if attempt < max_retries:
+                wait = attempt * 5
+                print(f"  Retrying in {wait}s...")
+                time.sleep(wait)
+    return False
 
 
 def download(lat_min, lat_max, lon_min, lon_max, date_start, date_end, out_path):
-    url = build_query_url(lat_min, lat_max, lon_min, lon_max, date_start, date_end)
-    print(f"Requesting data from ERDDAP:\n{url}\n")
-
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
-    # Download the actual .nc bytes via plain HTTP GET first — this avoids
-    # netCDF4's OPeNDAP client, which mishandles ERDDAP's query-string syntax
-    # and throws "Malformed or unexpected Constraint" when opened directly
-    # as a URL with xr.open_dataset().
-    try:
-        response = requests.get(url, timeout=120)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
+    success = False
+    for base in ERDDAP_MIRRORS:
+        url = build_query_url(base, lat_min, lat_max, lon_min, lon_max, date_start, date_end)
+        print(f"\nTrying mirror: {base}\n{url}\n")
+        if try_download(url, out_path):
+            success = True
+            break
+
+    if not success:
         raise RuntimeError(
-            f"Failed to download data from NOAA ERDDAP.\n"
-            f"This can happen if the server is temporarily unavailable, "
-            f"the date range/bounding box has no data, or there's no "
-            f"internet access from this environment.\n"
-            f"Original error: {e}"
+            f"Failed to download from all ERDDAP mirrors after retries.\n"
+            f"This is likely a temporary NOAA server issue. Try again in a few "
+            f"minutes, or try a smaller date range / bounding box first to test "
+            f"connectivity (e.g. --date_start 2023-01-01 --date_end 2023-01-31)."
         )
 
-    with open(out_path, "wb") as f:
-        f.write(response.content)
-
-    print(f"Downloaded {len(response.content) / 1e6:.2f} MB to {out_path}")
-
-    # Now open the local file to verify it's valid and print info
+    # Verify it's valid NetCDF
     try:
         ds = xr.open_dataset(out_path)
     except Exception as e:
-        # If this fails, the downloaded content was likely an error page,
-        # not real NetCDF data
         with open(out_path, "r", errors="ignore") as f:
             preview = f.read(500)
         raise RuntimeError(
-            f"Downloaded file is not valid NetCDF. ERDDAP likely returned "
-            f"an error page instead of data. First 500 chars of response:\n"
-            f"{preview}\n\nOriginal error: {e}"
+            f"Downloaded file is not valid NetCDF (ERDDAP likely returned an "
+            f"error page). First 500 chars:\n{preview}\n\nOriginal error: {e}"
         )
 
     if "zlev" in ds.dims:
         ds = ds.squeeze("zlev", drop=True)
-        ds.to_netcdf(out_path)  # re-save without the singleton dim
+        ds.to_netcdf(out_path)
 
-    print(f"Verified valid NetCDF file.")
+    print(f"\nVerified valid NetCDF file.")
     print(f"Shape: {ds['sst'].shape}  (time, lat, lon)")
     print(f"Date range: {ds.time.values[0]} to {ds.time.values[-1]}")
 
