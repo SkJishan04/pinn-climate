@@ -6,7 +6,7 @@ import torch
 
 class Config:
     # --- Data ---
-    DATA_PATH = "./data/raw/noaa_sst.nc"          # NOAA/Copernicus NetCDF file
+    DATA_PATH = "./data/raw/noaa_sst_real.nc"     # real NOAA OISST data
     VARIABLE = "sst"                              # sea surface temperature, or "precip"
     SEQ_LEN = 10                                  # input timesteps
     PRED_LEN = 5                                  # output timesteps to forecast
