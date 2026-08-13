@@ -72,3 +72,30 @@ Input sequence (T frames) → ConvLSTM Encoder → Hidden State
                                                ↓
                               L_total = L_MSE + λ(epoch) · L_physics
 ```
+
+## 📁 Project Structure
+
+```
+pinn-climate/
+├── config.py                      # Central hyperparameter configuration
+├── train.py                       # Main training loop with CSV logging
+├── evaluate.py                    # Standalone checkpoint evaluation
+├── ablation_study.py              # Baseline vs. physics-informed comparison
+├── smoke_test.py                  # End-to-end pipeline sanity check
+├── visualize_predictions.py       # Prediction vs. ground truth plots
+├── plot_training_history.py       # Training curve plots
+├── requirements.txt
+├── data/
+│   ├── dataset.py                 # NetCDF dataset loader
+│   ├── generate_synthetic_data.py # Synthetic SST data for pipeline testing
+│   └── download_noaa_data.py      # Real NOAA OISST data downloader (ERDDAP)
+├── models/
+│   ├── convlstm.py                # Stacked ConvLSTM encoder-decoder
+│   └── pinn_loss.py                # Physics-informed loss + adaptive λ scheduler
+├── utils/
+│   ├── metrics.py                 # MAE, RMSE, physical violation rate
+│   └── visualization.py           # Plotting utilities
+├── checkpoints/                   # Saved model weights (generated)
+├── logs/                          # Training history CSVs (generated)
+└── outputs/                       # Generated plots and results (generated)
+```
