@@ -143,3 +143,15 @@ python visualize_predictions.py       # predicted vs. ground truth fields
 python ablation_study.py
 ```
 Produces `outputs/ablation_comparison.png` and `outputs/ablation_results.csv`.
+
+## 🛠️ Tech Stack
+
+- **PyTorch** — model implementation and training
+- **xarray + netCDF4** — satellite climate data (NetCDF format) handling
+- **NOAA OISST v2.1** — real satellite-derived sea surface temperature data, via [NCEI ERDDAP](https://www.ncei.noaa.gov/erddap/index.html)
+- **scipy** — spatial resampling
+- **matplotlib** — visualization
+
+## 🌐 Data Source
+
+Real sea surface temperature data is sourced from NOAA's **Optimum Interpolation Sea Surface Temperature (OISST) v2.1** dataset — a quarter-degree daily global product blending satellite and in-situ observations, accessed via NOAA's public ERDDAP server (no API key required).
