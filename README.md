@@ -155,3 +155,19 @@ Produces `outputs/ablation_comparison.png` and `outputs/ablation_results.csv`.
 ## 🌐 Data Source
 
 Real sea surface temperature data is sourced from NOAA's **Optimum Interpolation Sea Surface Temperature (OISST) v2.1** dataset — a quarter-degree daily global product blending satellite and in-situ observations, accessed via NOAA's public ERDDAP server (no API key required).
+
+## 🔭 Future Work
+
+- [ ] Sweep `LAMBDA_MAX` to find the optimal accuracy/physical-plausibility tradeoff point
+- [ ] Extend the physics constraint beyond pure diffusion to include learned advection velocities from wind/current data
+- [ ] Apply the same framework to precipitation data, where the non-negativity constraint is most impactful
+- [ ] Longer training runs / larger spatial grids to test scalability
+- [ ] Dockerize for reproducible deployment
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+Sea surface temperature data provided by NOAA/NCEI OISST v2.1, accessed via ERDDAP.
