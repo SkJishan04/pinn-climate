@@ -44,3 +44,31 @@ An ablation study was run comparing an identical ConvLSTM architecture trained w
 The physics-informed model does **not** win on raw MAE/RMSE — and this project reports that honestly rather than cherry-picking a flattering run. What it *does* show is the real value proposition of physics-informed learning: **an 11× reduction in physically implausible predictions**, at a modest ~10–13% cost in raw pointwise error. For applications where physical plausibility matters as much as average accuracy (e.g. downstream models that assume conservation laws hold), that tradeoff is often worth making.
 
 This result also surfaced and led to fixing a real bug: an early version of the physics loss was **numerically unscaled** relative to MSE, causing the physics-weighted model to diverge once $\lambda$ ramped up (RMSE ballooned to 3.4, a −208% "improvement"). The fix — normalizing the physics residual's magnitude to match MSE's scale before applying $\lambda$ — is what produced the stable, interpretable result above. See [`models/pinn_loss.py`](models/pinn_loss.py) for the corrected implementation.
+
+## 🏗️ Architecture
+
+**Model**: A stacked ConvLSTM encoder-decoder that ingests a sequence of past satellite frames and autoregressively forecasts future frames.
+
+- **Encoder**: Processes `SEQ_LEN` input timesteps through 3 stacked ConvLSTM layers, accumulating spatiotemporal hidden state.
+- **Decoder**: Autoregressively generates `PRED_LEN` future frames, feeding each prediction back in as the next input.
+
+**Physics constraint**: The loss includes the residual of the 2D advection-diffusion PDE:
+
+$$\frac{\partial C}{\partial t} + u\frac{\partial C}{\partial x} + v\frac{\partial C}{\partial y} = D\left(\frac{\partial^2 C}{\partial x^2} + \frac{\partial^2 C}{\partial y^2}\right)$$
+
+computed via finite differences directly on the model's predicted sequence, plus a non-negativity penalty for physically bounded quantities (e.g. rainfall, energy).
+
+**Adaptive λ schedule**: $\lambda$ stays at 0 for the first `LAMBDA_WARMUP_EPOCHS`, then linearly ramps to `LAMBDA_MAX` over `LAMBDA_RAMP_EPOCHS` — letting the model master basic data patterns before physics constraints are enforced.
+
+```
+Input sequence (T frames) → ConvLSTM Encoder → Hidden State
+                                                      ↓
+                              ConvLSTM Decoder → Predicted sequence (T' frames)
+                                                      ↓
+                    ┌─────────────────────────────────┴─────────────────────────┐
+                    ↓                                                           ↓
+              MSE(pred, target)                              PDE residual + non-negativity penalty
+                    └─────────────────────────┬─────────────────────────────────┘
+                                               ↓
+                              L_total = L_MSE + λ(epoch) · L_physics
+```
