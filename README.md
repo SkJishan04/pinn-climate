@@ -72,6 +72,16 @@ Input sequence (T frames) → ConvLSTM Encoder → Hidden State
                                                ↓
                               L_total = L_MSE + λ(epoch) · L_physics
 ```
+## 💡 Lessons Learned
+
+**The physics loss initially broke training, and the bug was worth keeping in the story.**
+An early version of the physics-informed loss computed PDE residuals via finite differences on z-score-normalized data, using real-unit scale constants (`dx=1, dt=1`). This made the residual numerically enormous relative to MSE — so once the adaptive λ schedule ramped up, the physics term overpowered the data-fitting objective and the model's validation RMSE diverged from 1.95 to 3.37 over 30 epochs. The fix was to normalize the physics loss to match MSE's current magnitude before applying λ, so λ controls the *intended* relative weight rather than an arbitrary raw scale. This is a well-known but easy-to-miss failure mode in physics-informed learning — the physics constraint and the data loss almost never share a natural numerical scale.
+
+**Physics constraints aren't free accuracy — they're a tradeoff, and that's fine.**
+After the fix, the physics-informed model still didn't beat the baseline on MAE/RMSE (a ~10-13% cost). What it did deliver was an **11× reduction in physically implausible predictions** (0.478% → 0.043% violation rate). Reporting the honest tradeoff, rather than only the metric that flatters the approach, is what this project is actually about: physics-informed learning trades some average-case accuracy for edge-case physical plausibility — which is the real, useful property PINNs offer.
+
+**A generic diffusion PDE is illustrative, not a domain-accurate model of SST dynamics.**
+Real sea surface temperature is driven by solar heating, wind-driven mixing, and ocean currents — not diffusion alone. The PDE constraint used here demonstrates the *method* of injecting physics into a loss function; a production system would need a domain-validated equation (or a learned advection term from real wind/current data) to make stronger physical claims.
 
 ## 📁 Project Structure
 
@@ -171,3 +181,4 @@ MIT — see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 Sea surface temperature data provided by NOAA/NCEI OISST v2.1, accessed via ERDDAP.
+
