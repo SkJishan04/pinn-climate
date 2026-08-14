@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
+
+# Generated data & model artifacts
+data/raw/*.nc
+checkpoints/*.pt
+logs/*.csv
+outputs/*.png
+outputs/*.csv
+
+# Keep folder structure but ignore contents
+!data/raw/.gitkeep
+!checkpoints/.gitkeep
+!logs/.gitkeep
+!outputs/.gitkeep
+
+# Colab / Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
