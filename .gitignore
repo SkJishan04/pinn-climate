@@ -6,7 +6,7 @@ venv/
 
 # Generated data & model artifacts
 data/raw/*.nc
-# checkpoints/*.pt
+checkpoints/*.pt
 logs/*.csv
 outputs/*.png
 outputs/*.csv
