@@ -5,8 +5,8 @@ venv/
 *.egg-info/
 
 # Generated data & model artifacts
-data/raw/*.nc
-checkpoints/*.pt
+# data/raw/*.nc
+# checkpoints/*.pt
 logs/*.csv
 # outputs/*.png
 # outputs/*.csv
