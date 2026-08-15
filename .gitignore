@@ -5,11 +5,11 @@ venv/
 *.egg-info/
 
 # Generated data & model artifacts
-# data/raw/*.nc
+data/raw/*.nc
 # checkpoints/*.pt
 logs/*.csv
-# outputs/*.png
-# outputs/*.csv
+outputs/*.png
+outputs/*.csv
 
 # Keep folder structure but ignore contents
 !data/raw/.gitkeep
