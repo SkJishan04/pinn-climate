@@ -343,3 +343,16 @@ Building the NOAA data downloader surfaced several real-world gotchas: ERDDAP da
 
 ---
 
+## 🔭 Future Improvements / Roadmap
+
+- [ ] Sweep `LAMBDA_MAX` and schedule lengths to find the optimal accuracy/physical-plausibility tradeoff point
+- [ ] Extend the physics constraint beyond pure diffusion to include learned advection velocities from real wind/current data
+- [ ] Apply the same framework to precipitation data, where the non-negativity constraint is most impactful
+- [ ] Incorporate multi-variable inputs (wind, pressure) for richer spatiotemporal context
+- [ ] Scale up to longer time ranges and larger spatial grids to test robustness
+- [ ] Add automated unit tests beyond the current smoke test (per-module test coverage)
+- [ ] **Containerize with Docker** for fully reproducible environments *(not yet implemented)*
+- [ ] **Add CI/CD** (e.g. GitHub Actions) to automatically run the smoke test on every push *(not yet implemented)*
+
+---
+
