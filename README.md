@@ -201,3 +201,49 @@ pinn-climate/
 
 ---
 
+## 🚀 Setup & Usage
+
+### 1. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Get data
+
+**Option A — real NOAA satellite data:**
+```bash
+python data/download_noaa_data.py --date_start 2023-01-01 --date_end 2023-06-30
+```
+
+**Option B — synthetic data (for quick pipeline testing):**
+```bash
+python data/generate_synthetic_data.py --time_steps 200 --height 64 --width 64
+```
+
+Update `DATA_PATH` in `config.py` to match whichever file you generated.
+
+### 3. Train
+```bash
+python train.py
+```
+Saves the best checkpoint to `checkpoints/best_model.pt` and logs metrics to `logs/history.csv`.
+
+### 4. Evaluate
+```bash
+python evaluate.py
+```
+
+### 5. Visualize
+```bash
+python plot_training_history.py       # loss / MAE / RMSE / λ schedule curves
+python visualize_predictions.py       # predicted vs. ground truth fields
+```
+
+### 6. Run the ablation study (baseline vs. physics-informed)
+```bash
+python ablation_study.py
+```
+Produces `outputs/ablation_comparison.png` and `outputs/ablation_results.csv`.
+
+---
+
