@@ -330,3 +330,16 @@ This is intended to be run **before** any long training session (local or Colab)
 
 ---
 
+## 💡 Lessons Learned
+
+**The physics loss initially broke training, and the bug was worth keeping in the story.**
+An early version of the physics-informed loss computed PDE residuals via finite differences on z-score-normalized data, using real-unit scale constants (`dx=1, dt=1`). This made the residual numerically enormous relative to MSE — so once the adaptive λ schedule ramped up, the physics term overpowered the data-fitting objective and the model's validation RMSE diverged (from ~1.95 to ~3.37 over 30 epochs). The fix was to normalize the physics loss to match MSE's current magnitude before applying λ, so λ controls the *intended* relative weight rather than an arbitrary raw scale. This is a well-known but easy-to-miss failure mode in physics-informed learning — the physics constraint and the data loss almost never share a natural numerical scale.
+
+**Physics constraints aren't free accuracy — they're a tradeoff, and that's fine.**
+After the fix, the physics-informed model still didn't beat the baseline on MAE/RMSE. What it did deliver was an 11× reduction in physically implausible predictions. Reporting the honest tradeoff, rather than only the metric that flatters the approach, is the core takeaway of this project.
+
+**Real satellite data pipelines are messier than tutorials suggest.**
+Building the NOAA data downloader surfaced several real-world gotchas: ERDDAP dataset IDs and server mirrors change over time, longitude conventions differ between datasets (0–360° vs. −180–180°), and some sources return an extra singleton dimension (`depth`/`zlev`) that silently breaks shape assumptions downstream. Each of these required defensive, explicit handling rather than assuming clean input.
+
+---
+
