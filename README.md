@@ -155,3 +155,18 @@ flowchart LR
 
 ---
 
+## 🛠️ Tech Stack
+
+| Category | Tools |
+|---|---|
+| **Language** | Python 3.11+ |
+| **Deep Learning** | PyTorch |
+| **Data Handling** | xarray, netCDF4, NumPy |
+| **Data Source** | NOAA OISST v2.1 via [NCEI ERDDAP](https://www.ncei.noaa.gov/erddap/index.html) |
+| **Spatial Processing** | SciPy (resampling/interpolation) |
+| **Visualization** | Matplotlib |
+| **Experiment Tracking** | CSV-based logging |
+| **Compute** | Local CPU / Google Colab (GPU) |
+
+---
+
