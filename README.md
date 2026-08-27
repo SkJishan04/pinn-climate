@@ -356,3 +356,21 @@ Building the NOAA data downloader surfaced several real-world gotchas: ERDDAP da
 
 ---
 
+## 📄 License & Acknowledgments
+
+**License:** MIT — see [LICENSE](LICENSE) for details.
+
+**Data:** Sea surface temperature data provided by NOAA/NCEI **OISST v2.1**, accessed via [ERDDAP](https://www.ncei.noaa.gov/erddap/index.html).
+
+**References:**
+- Reynolds et al. (2007), *Daily High-Resolution-Blended Analyses for Sea Surface Temperature*
+- Banzon et al. (2016), *A long-term record of blended satellite and in situ sea-surface temperature for climate monitoring, modeling and environmental studies*
+
+<div align="center">
+
+---
+
+Made with 🌊 and 🔥 debugging sessions.
+
+</div>
+
