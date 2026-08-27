@@ -320,3 +320,13 @@ This is intended to be run **before** any long training session (local or Colab)
 
 ---
 
+## ⚠️ Limitations
+
+- **The physics constraint is illustrative, not domain-validated.** A generic 2D advection-diffusion PDE is used to demonstrate the *method* of injecting physics into a loss function. Real sea surface temperature is driven by solar heating, wind-driven mixing, and ocean currents — not diffusion alone — so a production system would need a more accurate governing equation or a learned advection term.
+- **Small-scale dataset.** Experiments use a limited date range and bounding box from NOAA OISST, not a global, multi-year dataset. Results demonstrate the approach, not production-scale performance.
+- **Accuracy/plausibility tradeoff is not free.** The physics-informed model traded ~10–13% higher MAE/RMSE for its improvement in physical validity — this is a genuine tradeoff, not a strict improvement, and should be weighed based on the downstream use case.
+- **No hyperparameter search performed** on `LAMBDA_MAX`, `DIFFUSION_COEFF`, or schedule lengths — current values are reasonable defaults, not tuned optima.
+- **Single-variable forecasting.** The model predicts SST only; it does not incorporate other correlated variables (wind, pressure, currents) that would likely improve both accuracy and physical realism.
+
+---
+
