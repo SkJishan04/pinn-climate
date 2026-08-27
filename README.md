@@ -247,3 +247,33 @@ Produces `outputs/ablation_comparison.png` and `outputs/ablation_results.csv`.
 
 ---
 
+## 💻 Examples
+
+### Downloading a custom region and date range
+
+```bash
+python data/download_noaa_data.py \
+  --lat_min 10.0 --lat_max 30.0 \
+  --lon_min 270.0 --lon_max 290.0 \
+  --date_start 2023-01-01 --date_end 2023-06-30
+```
+> Note: this dataset uses **0–360° longitude**, not −180 to 180.
+
+### Adjusting the physics-loss aggressiveness
+
+In `config.py`:
+```python
+LAMBDA_MAX = 0.3             # cap physics loss at ~30% the weight of MSE
+LAMBDA_WARMUP_EPOCHS = 15    # epochs of pure MSE training before physics kicks in
+LAMBDA_RAMP_EPOCHS = 20      # epochs over which λ ramps to LAMBDA_MAX
+```
+
+### Sample prediction output
+
+<!-- 🖼️ Real generated output — regenerate via visualize_predictions.py -->
+![Prediction vs Ground Truth](outputs/prediction_comparison.png)
+
+*Top row: ground truth. Middle row: model prediction. Bottom row: absolute error heatmap, across forecast timesteps.*
+
+---
+
