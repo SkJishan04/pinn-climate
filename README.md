@@ -63,3 +63,17 @@ The project includes a full **ablation study** comparing this physics-informed m
 
 ---
 
+## ✨ Features
+
+- 🛰️ **Real satellite data pipeline** — downloads live NOAA OISST v2.1 sea surface temperature data via NCEI's public ERDDAP server (no API key required).
+- 🧠 **ConvLSTM encoder-decoder** — stacked spatiotemporal architecture for sequence-to-sequence forecasting.
+- ⚖️ **Physics-informed hybrid loss** — MSE combined with a finite-difference advection-diffusion PDE residual and a non-negativity penalty.
+- 📈 **Adaptive λ scheduling** — physics loss weight ramps up only after the model masters basic data patterns, avoiding early-training instability.
+- 🔬 **Controlled ablation study** — trains an identical baseline (MSE-only) and physics-informed model on the same data/seed/split for a fair, quantified comparison.
+- 📊 **Full evaluation suite** — MAE, RMSE, and a custom **Physical Violation Rate** metric measuring physically impossible predictions.
+- 🎨 **Auto-generated visualizations** — training curves, prediction-vs-ground-truth comparisons, and ablation bar charts.
+- 🧪 **End-to-end smoke test** — validates the full pipeline (data → model → loss → backprop) in under a minute before committing to long training runs.
+- ☁️ **Colab-ready** — designed to run on free GPU runtimes with Google Drive persistence.
+
+---
+
