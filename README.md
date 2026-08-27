@@ -301,3 +301,22 @@ The physics-informed model does **not** win on raw MAE/RMSE — and this project
 
 ---
 
+## 🧪 Testing
+
+A lightweight end-to-end **smoke test** validates the full pipeline — data generation, model forward pass, physics loss computation, and backpropagation — without requiring a full training run.
+
+```bash
+python smoke_test.py
+```
+
+**What it checks:**
+- ✅ Synthetic data generates successfully
+- ✅ Dataset loader produces correctly shaped tensors
+- ✅ Model forward pass runs without shape errors
+- ✅ Physics-informed loss computes without NaNs
+- ✅ Gradients backpropagate and the optimizer step succeeds
+
+This is intended to be run **before** any long training session (local or Colab) to catch configuration or data issues early, rather than discovering them 45 minutes into a 60-epoch run.
+
+---
+
