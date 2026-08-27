@@ -77,3 +77,81 @@ The project includes a full **ablation study** comparing this physics-informed m
 
 ---
 
+## 🏗️ Architecture & Workflow
+
+### Model Architecture
+
+A stacked **ConvLSTM encoder-decoder** ingests a sequence of past satellite frames and autoregressively forecasts future frames.
+
+- **Encoder**: Processes `SEQ_LEN` input timesteps through 3 stacked ConvLSTM layers, accumulating spatiotemporal hidden state.
+- **Decoder**: Autoregressively generates `PRED_LEN` future frames, feeding each prediction back in as the next input.
+
+### Physics Constraint
+
+The loss includes the residual of the 2D advection-diffusion PDE, computed via finite differences directly on the model's predicted sequence:
+
+$$\frac{\partial C}{\partial t} + u\frac{\partial C}{\partial x} + v\frac{\partial C}{\partial y} = D\left(\frac{\partial^2 C}{\partial x^2} + \frac{\partial^2 C}{\partial y^2}\right)$$
+
+plus a non-negativity penalty for physically bounded quantities (e.g. rainfall, energy).
+
+<!-- 🖼️ PLACEHOLDER: AI-generated conceptual diagram illustrating "data-driven vs physics-constrained prediction" -->
+<!-- ![Concept Illustration](assets/concept-illustration.png) -->
+
+### Model & Loss Flow
+
+```mermaid
+flowchart TD
+    A[Input Sequence<br/>T past frames] --> B[ConvLSTM Encoder<br/>3 stacked layers]
+    B --> C[Hidden State]
+    C --> D[ConvLSTM Decoder<br/>autoregressive]
+    D --> E[Predicted Sequence<br/>T' future frames]
+
+    E --> F[MSE Loss<br/>vs ground truth]
+    E --> G[PDE Residual<br/>finite differences]
+    E --> H[Non-negativity<br/>Penalty]
+
+    G --> I[Physics Loss]
+    H --> I
+    I --> J["λ(epoch) × Physics Loss"]
+    F --> K[Total Loss]
+    J --> K
+
+    style A fill:#1e3a5f,color:#fff
+    style E fill:#1e3a5f,color:#fff
+    style K fill:#b02a2a,color:#fff
+    style I fill:#2a6b4f,color:#fff
+```
+
+### Adaptive λ Schedule
+
+$\lambda$ stays at 0 for the first `LAMBDA_WARMUP_EPOCHS`, then linearly ramps to `LAMBDA_MAX` over `LAMBDA_RAMP_EPOCHS` — letting the model master basic data patterns before physics constraints are enforced.
+
+```mermaid
+graph LR
+    A[Epoch 0] -->|λ = 0<br/>pure data fitting| B[Warmup End<br/>~epoch 15]
+    B -->|λ ramps 0 → max| C[Ramp End<br/>~epoch 35]
+    C -->|λ = λ_max<br/>steady physics weight| D[Epoch 60]
+
+    style A fill:#444,color:#fff
+    style D fill:#2a6b4f,color:#fff
+```
+
+### End-to-End Pipeline
+
+```mermaid
+flowchart LR
+    A[NOAA ERDDAP<br/>Satellite Data] --> B[Dataset Loader<br/>normalize + squeeze]
+    B --> C[Train/Val Split]
+    C --> D[ConvLSTM Training<br/>+ Physics Loss]
+    D --> E[Best Checkpoint]
+    E --> F[Evaluation<br/>MAE / RMSE / Violations]
+    E --> G[Visualization<br/>predictions + curves]
+    D --> H[Ablation Study<br/>Baseline vs Physics-Informed]
+
+    style A fill:#1e3a5f,color:#fff
+    style D fill:#2a6b4f,color:#fff
+    style H fill:#b02a2a,color:#fff
+```
+
+---
+
